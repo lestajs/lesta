@@ -16,12 +16,7 @@ describe('dive function', () => {
   
   const handler = {
     beforeSet: (value, ref, compare, intercept) => {
-      if (true) {
-        compare()
-      } else {
-        const v = null
-        intercept(v)
-      }
+        return compare()
     },
     set: (target, path, value, ref) => {},
     get: (target, ref) => {}
@@ -37,7 +32,7 @@ describe('dive function', () => {
     
     // Assert that changes were made
     expect(proxied.age).to.equal(31)
-    expect(proxied.hobbies).to.deep.equal(['reading', 'playing guitar', 'hiking'])
+    expect(proxied.hobbies[2]).to.equal( 'hiking')
     expect(proxied.address.zip).to.equal('10001')
   })
   

@@ -6,7 +6,8 @@ const messages = {
   553: 'param "%s" not found in current route.',
   554: 'param "%s" not found in object route.',
   555: 'param "%s" does not match regular expression.',
-  556: 'too many redirects'
+  556: 'too many redirects',
+  557: 'property "path" missing'
 }
 
 const errorRouter = (name = '', code, param = '') => console.error(`[Lesta error ${code}]: Error in route "${name}": ${messages[code]}`, param)

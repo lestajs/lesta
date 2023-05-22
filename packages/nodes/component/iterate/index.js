@@ -1,11 +1,10 @@
 import Components from '../index'
-import { deleteReactive } from '../../../utils'
+import { deleteReactive, queue } from '../../../utils'
 
 export default class Iterate extends Components {
     constructor(...args) {
         super(...args)
-        this.queue = []
-        this.processing = false
+        this.queue = queue()
         this.name = null
         this.created = false
     }
@@ -25,7 +24,7 @@ export default class Iterate extends Components {
         if (Object.getPrototypeOf(this.data).instance === 'Proxy') {
             this.reactiveComponent([this.name], async (v) => {
                 this.data = this.node.component.iterate()
-                if (v.length) this.flow(async () => {
+                if (v.length) this.queue.add(async () => {
                     if (this.node.component.proxies) {
                         for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
                             if (typeof fn === 'function' && fn.name) {
@@ -40,10 +39,10 @@ export default class Iterate extends Components {
                         }
                     }
                 })
-                this.flow(async () => await this.length(v.length))
+                this.queue.add(async () => await this.length(v.length))
             })
             this.reactiveComponent([this.name + '.length'], async (v) => {
-                this.flow(async () => await this.length(v))
+                this.queue.add(async () => await this.length(v))
             })
         }
         for await (const [index] of this.data.entries()) {
@@ -65,22 +64,11 @@ export default class Iterate extends Components {
             }
         }
     }
-    async flow(fn) {
-        this.queue.push(fn)
-        if (!this.processing) {
-            this.processing = true
-            while (this.queue.length) {
-                const action = this.queue.shift()
-                await action()
-            }
-            this.processing = false
-        }
-    }
     proxies(proxies, target, index) {
         const reactive = (pr, fn) => {
             if (this.impress.refs.some(ref => ref.includes(this.name))) {
                 this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-                    this.flow(async () => {
+                    this.queue.add(async () => {
                         if (p) {
                             p.shift()
                             this.nodeElement.children[index]?.proxy[pr](v, p)
@@ -96,7 +84,7 @@ export default class Iterate extends Components {
             } else {
                 if (!this.created) {
                     this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-                        this.flow(async () => {
+                        this.queue.add(async () => {
                             for (let i = 0; i < this.nodeElement.children.length; i++) {
                                 p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn())
                             }

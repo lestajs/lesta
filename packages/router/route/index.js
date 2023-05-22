@@ -21,19 +21,29 @@ export default class Route {
         fullPath: window.location.href,
         hash: window.location.hash.slice(1),
         search: Object.fromEntries(new URLSearchParams(window.location.search)),
-        rout: {name: target.name, path: this.result.path, params: target.params, extra: target.extra}
+        extra: target.extra,
+        name: target.name,
+        rout: {
+          name: target.name,
+          path: this.result.path,
+          params: target.params,
+          alias: target.alias,
+          redirect: target.redirect
+        }
       }
     }
   }
   mapping(path) {
     return this.url.match(new RegExp('^' + path.replace(/:\w+/g, '(\\w+)') + '$'))
   }
-  find(target) {
+  find(target, path) {
+    this.result.path = path
     this.result.map = this.mapping(this.result.path)
     let index = 1
-    for (const key in target.params) {
+    
+    for (const key in target.route.params) {
       let fl = false
-      let param = target.params[key]
+      let param = target.route.params[key]
       if (!this.result.map && param.optional) {
         const p = this.result.path.replace('/:' + key, '').replace(/\/$/, '')
         this.result.map = this.mapping(p)
@@ -48,56 +58,34 @@ export default class Route {
       if (!fl) index++
     }
   }
-  setpath(path, parent) {
-    if (parent) {
-      this.result.path = (parent + path).replace(/\/$/, '')
-    } else {
-      this.result.path = path
-    }
-  }
-  finder(target, parent) {
-    this.setpath(target.path, parent)
-    this.find(target)
-    if (!this.result.map && target.alias) {
+  alias(target) {
+    if (target.alias) {
       if (Array.isArray(target.alias)) {
         for (const path of target.alias) {
-          this.setpath(path, parent)
-          this.find(target)
+          this.find(target, path)
         }
       } else {
-        this.setpath(target.alias, parent)
-        this.find(target)
+        this.find(target, target.alias)
       }
     }
   }
+  finder(target) {
+    this.find(target, target.path)
+    if (!this.result.map) this.alias(target)
+  }
   set(target) {
-    if (this.result.map) {
-      this.result.to = this.picker(target)
-      this.result.target = target
-    }
+    this.result.to = this.picker(target.route)
+    this.result.target = target.route
   }
   routeEach(routes, errorRouter) {
     let buf = {}
     for (const route of routes) {
       if (!route.path) errorRouter(501, route.name)
-      if (route.children) {
-        let bufChild = null
-        for (const child of route.children) {
-          if (!child.path) errorRouter(501, child.name)
-          child.params = { ...route.params, ...child.params }
-          this.finder(child, route.path)
-          if (this.result.map) {
-            this.set(child)
-            bufChild = { ...this.result }
-          }
-        }
-        if (!this.result.map && bufChild) this.result = bufChild
-      } else {
-        this.finder(route)
-        if (this.result.map) this.set(route)
+      this.finder(route)
+      if (this.result.map) {
+        this.set(route)
+        buf = { ...this.result }
       }
-      
-      if (this.result.map) buf = { ...this.result }
     }
     if (!this.result.map && buf) this.result = buf
     return this.result

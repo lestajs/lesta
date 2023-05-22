@@ -102,7 +102,8 @@ class Init extends InitBasic {
             data instanceof Promise ||
             data instanceof HTMLCollection ||
             data instanceof NodeList ||
-            data instanceof Element
+            data instanceof Element ||
+            key.startsWith('__')
           this.context.param[key] = isDataValid ? data : replicate(data) ?? ((prop.required && this.app.errorProps(container.path, 'params', key, 303)) || prop.default)
         }
         if (prop.type && typeof this.context.param[key] !== prop.type) this.app.errorProps(container.path, 'params', key, 304, prop.type)

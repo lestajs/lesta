@@ -14,19 +14,29 @@ function replacement(params, param, key) {
   }
 }
 
-export default function link(v, t, n) {
+function encode(v) {
+  return /[<>\/&"'=]/.test(v) ? encodeURIComponent(v) : v
+}
+
+export default function link(v, t, l) {
   let res = ''
   if (!v) return '/'
   if (typeof v === 'object') {
     if (v.path) {
       res = v.path
     } else if (v.name) {
-      if (v.name in n) {
-        res = n[v.name].path
-        const params = n[v.name].route.params
-        for (const [ key, param ] of Object.entries(params)) {
-          res = res.replace('/:' + key, replacement(v.params, param, key))
+      const index = l.findIndex((e)=> e.name === v.name)
+      if (index !== -1) {
+        res = l[index].path
+        const params = l[index].route.params
+        for (const key in v.params) {
+          if (!params[key]) warnRouter(553, key)
         }
+        for (const [ key, param ] of Object.entries(params)) {
+          const r = replacement(v.params, param, key)
+          res = res.replace('/:' + key, encode(r))
+        }
+        if (v.search) res += '?' + (new URLSearchParams(v.search)).toString()
       } else warnRouter(551, v.name)
     } else {
       const url = new URL(window.location)
@@ -37,13 +47,13 @@ export default function link(v, t, n) {
           const param = v.params[key] || t.params[key]
           if (param) {
             const r = replacement(v.params, param, key)
-            res = res.replace('/:' + key, r)
+            res = res.replace('/:' + key, encode(r))
           } else warnRouter(553, key)
         }
       }
       if (v.search) {
         for (const key in v.search) {
-          v.search[key] === '' ? url.searchParams.delete(key) : url.searchParams.set(key, v.search[key])
+          v.search[key] === '' ? url.searchParams.delete(key) : url.searchParams.set(encode(key), encode(v.search[key]))
         }
       }
       res += url.search

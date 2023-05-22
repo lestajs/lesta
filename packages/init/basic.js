@@ -17,7 +17,7 @@ class InitBasic {
         return v
       },
       define(pr) {
-        if(pr && pr[0] === '_') {
+        if(pr && pr.startsWith('_')) {
           return this.refs[0]
         }
         return [...this.refs]

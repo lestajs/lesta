@@ -9,24 +9,22 @@ function dive(target, handler) {
       },
       set(target, key, value, receiver) {
         const { path, ref } = nav(p, key)
-        let cancel = false
+        let reject = false
         handler.beforeSet(value, ref, () => {
           if (target[key] != null && typeof target[key] === 'object') {
+            if (target[key] === value) reject = true
             if (Reflect.has(target, key)) unproxy(target, key)
-            if ( value != null && typeof value === 'object') {
+            if (value != null && typeof value === 'object') {
               const s = JSON.stringify(value)
               if (s !== JSON.stringify(target[key])) {
                 value = JSON.parse(s)
-              }
+              } else reject = true
             }
-          }
-          else if (Object.is(target[key], value) && key !== 'length') {
-            cancel = true
-          }
+          } else if (Object.is(target[key], value) && key !== 'length') reject = true
         }, (v) => {
           value = replicate(v)
         })
-        if (cancel) return true
+        if (reject) return true
         if (value != null && typeof value === 'object' && !preproxy.has(value)) {
           value = proxify(value, path)
         }

@@ -1,19 +1,19 @@
 import { load } from '../utils'
 import Route from  './route'
 import link from './link'
-import names from './names'
+import distribute from './distribute'
 import { errorRouter } from '../utils/catcher'
 
 class Router {
   constructor(options) {
-    this.current = { options: {}, context: {}, path: '' }
     this.routes = options.routes
     this.from = {}
     this.to = {}
+    this.current = null
     this.currentLayout = null
     this.afterEach = options.afterEach
     this.beforeEach = options.beforeEach
-    this.names = {}
+    this.list = []
     this.next = {}
     this.numRedirects = 0
     this.prevUrl = ''
@@ -25,9 +25,7 @@ class Router {
       await this.update()
       return url
     }
-    this.link = (v) => {
-      return link(v, this.to, this.names)
-    }
+    this.link = (v) => link(v, this.to, this.list)
     this.go = (v) => history.go(v)
   }
   CSP(content) {
@@ -42,7 +40,7 @@ class Router {
     this.stores = stores
     window.addEventListener('popstate', this.update.bind(this))
     this.root.addEventListener('click', this.links.bind(this))
-    names(this.routes, this.names)
+    distribute(this.routes, this.list, errorRouter)
     this.update()
   }
   destroy() {
@@ -75,11 +73,6 @@ class Router {
     this.root.nodepath = name || ''
     layout && this.root.setAttribute('layout', layout)
   }
-  async getProps(route) {
-    if(route.params) {
-      return { params: typeof route.params === 'function' ? await route.params(this.to, this.from) : route.params}
-    }
-  }
   async routeUpdate(component) {
     component.options.routeUpdate && await component.options.routeUpdate.bind(component.context)(this.to, this.from)
   }
@@ -96,25 +89,26 @@ class Router {
   async update() {
     if (await this.hooks(this.beforeEach, null, this.from)) return
     const route = new Route()
-    const { target, to } = route.routeEach(this.routes, errorRouter)
+    const { target, to } = route.routeEach(this.list, errorRouter)
     if (target) {
       const from = {...this.to}
       this.from = from
       this.to = to
       if (target.redirect) {
         let v = target.redirect
-        typeof target.redirect === 'function' ? this.push(await v(to, from)) : this.push(v)
+        typeof v === 'function' ? this.push(await v(to, from)) : this.push(v)
         return true
       }
       if (await this.hooks(target.beforeEnter, to, from)) return
-      for await (const [_, module] of Object.entries(this.stores)) {
+      for await (const module of Object.values(this.stores)) {
         if (await this.hooks(module.store.beforeEnter?.bind(module.context), to, from)) return
       }
-      if (from.rout?.path === target.path) {
+      if (from.path === to.path) {
         await this.routeUpdate(this.current)
-      } else {
+      } else if (target.static && this.current) {
+        window.location.href = to.fullPath
+      } else if (target.component) {
         const component = await load(target.component)
-        this.current.path = target.path
         if (!component.layout) {
           this.currentLayout = null
           this.root.unmount && await this.root.unmount()
@@ -123,17 +117,15 @@ class Router {
           this.currentLayout.options.routerView.unmount && await this.currentLayout.options.routerView.unmount()
         } else {
           this.root.unmount && await this.root.unmount()
-          component.layout.router = {push: this.push.bind(this), ...to}
-          this.currentLayout = await this.mount(component.layout, await this.getProps(target), this.root)
+          this.currentLayout = await this.mount(component.layout, { to, from }, this.root)
           this.currentLayout.options.routerView = this.root.querySelector('[router]')
         }
-        component.router = {push: this.push.bind(this), ...to}
-        this.current = await this.mount(component, await this.getProps(target), this.currentLayout?.options.routerView || this.root)
+        this.current = await this.mount(component, { to, from }, this.currentLayout?.options.routerView || this.root)
         document.title = target.title || 'Lesta'
         this.setName(target.name, target.layout)
       }
       if (await this.hooks(target.afterEnter, to, from)) return
-      for await (const [_, module] of Object.entries(this.stores)) {
+      for await (const module of Object.values(this.stores)) {
         if (await this.hooks(module.store.afterEnter?.bind(module.context), to, from)) return
       }
     }
@@ -144,14 +136,12 @@ class Router {
 
 function createRouter(options) {
   const router = new Router(options)
-  const { init, to, from, push, link, go } = router
+  const { init, push, link, go } = router
   return {
     init: init.bind(router),
     push: push.bind(router),
     link: link.bind(router),
-    go,
-    to,
-    from
+    go
   }
 }
 

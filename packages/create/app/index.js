@@ -61,19 +61,23 @@ function createComponent(options, nodeElement, component, section) {
   }
 }
 
-function createApp(options) {
+function createApp(entry) {
   const app = {
-    ...options,
+    ...entry,
     ...catcher,
     store: {},
     async checkStore(key) {
       if (!(key in app.store)) {
-        const module = await load(options.stores[key])
+        const module = await load(entry.stores[key])
         if (!module) return catcher.errorStore(key, 401)
         createStore(module, app, key)
       }
     },
     async mount(options, props = {}, nodeElement) {
+      if (app.router) {
+        app.router.to = props.to
+        app.router.from = props.from
+      }
       if (options) {
         const component = new Init(options, app, Nodes)
         const container = createComponent({...options}, nodeElement || app.root, component, props.section)
@@ -83,13 +87,13 @@ function createApp(options) {
     },
     async unmount() {
       await app.root.unmount()
-      options.router && options.router.destroy()
+      app.router && app.router.destroy()
     }
   }
-  for (const [key, module] of Object.entries(options.stores)) {
+  for (const [key, module] of Object.entries(app.stores)) {
     if (typeof module !== 'function') createStore(module, app, key)
   }
-  options.router && options.router.init(app.root, app.mount, app.store)
+  app.router && app.router.init(app.root, app.mount, app.store)
   return { mount: app.mount, unmount: app.unmount }
 }
 export { createApp }
