@@ -20,6 +20,12 @@
   },
   "main": "bundlers/lesta.esm.js",
   "module": "bundlers/lesta.esm.js",
+  "exports": {
+    ".": {
+      "import": "./bundlers/lesta.esm.js",
+      "require": "./bundlers/lesta.cjs.js"
+    }
+  },
   "scripts": {
     "build": "node scripts/build.js",
     "test": "cypress run",
