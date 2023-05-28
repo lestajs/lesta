@@ -2,16 +2,30 @@
   "name": "lesta",
   "version": "0.0.1-alpha",
   "description": "",
+  "keywords": [
+    "lesta",
+    "lesta.js",
+    "lestajs"
+  ],
   "files": [
     "bundlers/lesta.esm.js",
     "bundlers/lesta.cjs.js"
   ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/lestajs/lesta.git"
+  },
+  "bugs": {
+    "url": "https://github.com/lestajs/lesta/issues"
+  },
+  "main": "bundlers/lesta.esm.js",
+  "module": "bundlers/lesta.esm.js",
   "scripts": {
     "build": "node scripts/build.js",
     "test": "cypress run",
     "cypress": "cypress open"
   },
-  "author": "",
+  "author": "Sasha kossyak",
   "license": "ISC",
   "devDependencies": {
     "cypress": "^7.0.0",
