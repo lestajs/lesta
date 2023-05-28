@@ -16,24 +16,26 @@
         },
         set(target2, key, value, receiver) {
           const { path, ref } = nav(p, key);
-          let cancel = false;
+          let reject = false;
           handler.beforeSet(value, ref, () => {
             if (target2[key] != null && typeof target2[key] === "object") {
+              if (target2[key] === value)
+                reject = true;
               if (Reflect.has(target2, key))
                 unproxy(target2, key);
               if (value != null && typeof value === "object") {
                 const s = JSON.stringify(value);
                 if (s !== JSON.stringify(target2[key])) {
                   value = JSON.parse(s);
-                }
+                } else
+                  reject = true;
               }
-            } else if (Object.is(target2[key], value) && key !== "length") {
-              cancel = true;
-            }
+            } else if (Object.is(target2[key], value) && key !== "length")
+              reject = true;
           }, (v) => {
             value = replicate(v);
           });
-          if (cancel)
+          if (reject)
             return true;
           if (value != null && typeof value === "object" && !preproxy.has(value)) {
             value = proxify(value, path);
@@ -115,13 +117,15 @@
     }
   }
 
+  // packages/utils/stringToHTML.js
+  function stringToHTML(str) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(str, "text/html");
+    return doc.body || document.createElement("body");
+  }
+
   // packages/utils/cleanHTML.js
   function cleanHTML(str) {
-    function stringToHTML() {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(str, "text/html");
-      return doc.body || document.createElement("body");
-    }
     function removeScripts(html2) {
       const scripts = html2.querySelectorAll("script");
       for (let script of scripts) {
@@ -152,7 +156,7 @@
         clean(node);
       }
     }
-    const html = stringToHTML();
+    const html = stringToHTML(str);
     removeScripts(html);
     clean(html);
     return html.childNodes;
@@ -212,7 +216,7 @@
           return v;
         },
         define(pr) {
-          if (pr && pr[0] === "_") {
+          if (pr && pr.startsWith("_")) {
             return this.refs[0];
           }
           return [...this.refs];
@@ -460,7 +464,7 @@
   // packages/create/widget/index.js
   async function createWidget(options, root) {
     const component = new InitBasic(options, { errorNode }, NodesBasic);
-    root.append(...cleanHTML(options.template));
+    root.innerHTML = options.template;
     await lifecycle(component, root);
     return {
       destroy() {

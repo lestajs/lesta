@@ -22,24 +22,26 @@
         },
         set(target2, key, value, receiver) {
           const { path, ref } = nav(p, key);
-          let cancel = false;
+          let reject = false;
           handler.beforeSet(value, ref, () => {
             if (target2[key] != null && typeof target2[key] === "object") {
+              if (target2[key] === value)
+                reject = true;
               if (Reflect.has(target2, key))
                 unproxy(target2, key);
               if (value != null && typeof value === "object") {
                 const s = JSON.stringify(value);
                 if (s !== JSON.stringify(target2[key])) {
                   value = JSON.parse(s);
-                }
+                } else
+                  reject = true;
               }
-            } else if (Object.is(target2[key], value) && key !== "length") {
-              cancel = true;
-            }
+            } else if (Object.is(target2[key], value) && key !== "length")
+              reject = true;
           }, (v) => {
             value = replicate(v);
           });
-          if (cancel)
+          if (reject)
             return true;
           if (value != null && typeof value === "object" && !preproxy.has(value)) {
             value = proxify(value, path);
@@ -159,13 +161,15 @@
     }
   }
 
+  // packages/utils/stringToHTML.js
+  function stringToHTML(str) {
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(str, "text/html");
+    return doc.body || document.createElement("body");
+  }
+
   // packages/utils/cleanHTML.js
   function cleanHTML(str) {
-    function stringToHTML() {
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(str, "text/html");
-      return doc.body || document.createElement("body");
-    }
     function removeScripts(html2) {
       const scripts = html2.querySelectorAll("script");
       for (let script of scripts) {
@@ -196,11 +200,37 @@
         clean(node);
       }
     }
-    const html = stringToHTML();
+    const html = stringToHTML(str);
     removeScripts(html);
     clean(html);
     return html.childNodes;
   }
+
+  // packages/utils/queue.js
+  var queue = () => {
+    const funcQueue = [];
+    let processing = false;
+    const size = () => funcQueue.length;
+    const isEmpty = () => funcQueue.length === 0;
+    const add = (fn) => {
+      funcQueue.push(fn);
+      if (!processing) {
+        processing = true;
+        next();
+      }
+    };
+    const next = async () => {
+      const action = funcQueue.at(0);
+      if (action) {
+        await action();
+        funcQueue.shift();
+        next();
+      } else {
+        processing = false;
+      }
+    };
+    return { add, isEmpty, size };
+  };
 
   // packages/lifecycle/index.js
   async function lifecycle(component, container2, props) {
@@ -256,7 +286,7 @@
           return v;
         },
         define(pr) {
-          if (pr && pr[0] === "_") {
+          if (pr && pr.startsWith("_")) {
             return this.refs[0];
           }
           return [...this.refs];
@@ -486,7 +516,7 @@
             const storeParams = this.app.store[store].params(key);
             this.context.param[key] = replicate(storeParams) ?? (prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default);
           } else {
-            const isDataValid = data instanceof Promise || data instanceof HTMLCollection || data instanceof NodeList || data instanceof Element;
+            const isDataValid = data instanceof Promise || data instanceof HTMLCollection || data instanceof NodeList || data instanceof Element || key.startsWith("__");
             this.context.param[key] = isDataValid ? data : replicate(data) ?? (prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default);
           }
           if (prop.type && typeof this.context.param[key] !== prop.type)
@@ -566,7 +596,8 @@
     553: 'param "%s" not found in current route.',
     554: 'param "%s" not found in object route.',
     555: 'param "%s" does not match regular expression.',
-    556: "too many redirects"
+    556: "too many redirects",
+    557: 'property "path" missing'
   };
   var errorRouter = (name = "", code, param = "") => console.error(`[Lesta error ${code}]: Error in route "${name}": ${messages5[code]}`, param);
   var warnRouter = (code, param = "") => console.error(`[Lesta warn ${code}]: ${messages5[code]}`, param);
@@ -716,8 +747,7 @@
   var Iterate = class extends Components {
     constructor(...args) {
       super(...args);
-      this.queue = [];
-      this.processing = false;
+      this.queue = queue();
       this.name = null;
       this.created = false;
     }
@@ -740,7 +770,7 @@
         this.reactiveComponent([this.name], async (v) => {
           this.data = this.node.component.iterate();
           if (v.length)
-            this.flow(async () => {
+            this.queue.add(async () => {
               if (this.node.component.proxies) {
                 for (const [pr, fn] of Object.entries(this.node.component.proxies)) {
                   if (typeof fn === "function" && fn.name) {
@@ -755,10 +785,10 @@
                 }
               }
             });
-          this.flow(async () => await this.length(v.length));
+          this.queue.add(async () => await this.length(v.length));
         });
         this.reactiveComponent([this.name + ".length"], async (v) => {
-          this.flow(async () => await this.length(v));
+          this.queue.add(async () => await this.length(v));
         });
       }
       for await (const [index] of this.data.entries()) {
@@ -780,22 +810,11 @@
         }
       }
     }
-    async flow(fn) {
-      this.queue.push(fn);
-      if (!this.processing) {
-        this.processing = true;
-        while (this.queue.length) {
-          const action = this.queue.shift();
-          await action();
-        }
-        this.processing = false;
-      }
-    }
     proxies(proxies, target, index) {
       const reactive = (pr, fn) => {
         if (this.impress.refs.some((ref) => ref.includes(this.name))) {
           this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-            this.flow(async () => {
+            this.queue.add(async () => {
               if (p) {
                 p.shift();
                 this.nodeElement.children[index]?.proxy[pr](v, p);
@@ -811,7 +830,7 @@
         } else {
           if (!this.created) {
             this.reactiveComponent(this.impress.define(pr), async (v, p) => {
-              this.flow(async () => {
+              this.queue.add(async () => {
                 for (let i = 0; i < this.nodeElement.children.length; i++) {
                   p ? this.nodeElement.children[i].proxy[pr](v, p) : this.nodeElement.children[i].proxy[pr](fn());
                 }
@@ -1088,15 +1107,14 @@
       const sectionNode = nodeElement.section[section];
       if (!sectionNode)
         return errorComponent(nodeElement.nodename, 202, section);
-      sectionNode.innerHTML = "";
-      sectionNode.append(...cleanHTML(options.template));
+      sectionNode.innerHTML = options.template;
       sectionNode.nodepath = nodeElement.nodepath + "." + section;
       sectionNode.nodename = section;
       if (!sectionNode.unmount)
         sectionNode.unmount = async () => {
+          sectionNode.innerHTML = "";
           component.destroy(sectionNode);
           await component.unmount();
-          sectionNode.innerHTML = "";
         };
       return sectionNode;
     } else {
@@ -1104,10 +1122,10 @@
         if (!nodeElement.iterableElement) {
           if (!options.template)
             return this.app.errorComponent(nodeElement.nodepath, 209);
-          const template = cleanHTML(options.template);
-          if (template.length > 1)
+          const template = stringToHTML(options.template);
+          if (template.children.length > 1)
             return this.app.errorComponent(nodeElement.nodepath, 210);
-          nodeElement.iterableElement = template[0];
+          nodeElement.iterableElement = template.children[0];
           nodeElement.innerHTML = "";
         }
         const iterableElement = nodeElement.iterableElement.cloneNode(true);
@@ -1122,55 +1140,58 @@
           };
         iterableElement.setAttribute("iterable", "");
         iterableElement.unmount = async () => {
+          nodeElement.children[nodeElement.children.length - 1].remove();
           await component.destroy(iterableElement);
           await component.unmount();
-          nodeElement.children[nodeElement.children.length - 1].remove();
         };
         return iterableElement;
       } else if (options.template) {
-        nodeElement.innerHTML = "";
-        nodeElement.append(...cleanHTML(options.template));
+        nodeElement.innerHTML = options.template;
       }
       if (!nodeElement.unmount)
         nodeElement.unmount = async () => {
+          nodeElement.innerHTML = "";
           component.destroy(nodeElement);
           await component.unmount();
-          nodeElement.innerHTML = "";
         };
       return nodeElement;
     }
   }
-  function createApp(options) {
+  function createApp(entry) {
     const app = {
-      ...options,
+      ...entry,
       ...catcher_exports,
       store: {},
       async checkStore(key) {
         if (!(key in app.store)) {
-          const module = await load(options.stores[key]);
+          const module = await load(entry.stores[key]);
           if (!module)
             return errorStore(key, 401);
           createStore(module, app, key);
         }
       },
-      async mount(options2, props = {}, nodeElement) {
-        if (options2) {
-          const component = new Init(options2, app, Nodes);
-          const container2 = createComponent({ ...options2 }, nodeElement || app.root, component, props.section);
+      async mount(options, props = {}, nodeElement) {
+        if (app.router && props.to) {
+          app.router.to = props.to;
+          app.router.from = props.from;
+        }
+        if (options) {
+          const component = new Init(options, app, Nodes);
+          const container2 = createComponent({ ...options }, nodeElement || app.root, component, props.section);
           await lifecycle(component, container2, props);
-          return { options: options2, context: component.context, container: container2 };
+          return { options, context: component.context, container: container2 };
         }
       },
       async unmount() {
         await app.root.unmount();
-        options.router && options.router.destroy();
+        app.router && app.router.destroy();
       }
     };
-    for (const [key, module] of Object.entries(options.stores)) {
+    for (const [key, module] of Object.entries(app.stores)) {
       if (typeof module !== "function")
         createStore(module, app, key);
     }
-    options.router && options.router.init(app.root, app.mount, app.store);
+    app.router && app.router.init(app.root, app.mount, app.store);
     return { mount: app.mount, unmount: app.unmount };
   }
 

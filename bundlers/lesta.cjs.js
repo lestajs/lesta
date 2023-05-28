@@ -1,13 +1,43 @@
 var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
 var __export = (target, all) => {
   for (var name in all)
     __defProp(target, name, { get: all[name], enumerable: true });
 };
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === "object" || typeof from === "function") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
+
+// scripts/lesta.js
+var lesta_exports = {};
+__export(lesta_exports, {
+  createApp: () => createApp,
+  createRouter: () => createRouter,
+  createWidget: () => createWidget,
+  debounce: () => debounce,
+  deepFreeze: () => deepFreeze,
+  delay: () => delay,
+  deleteReactive: () => deleteReactive,
+  mapProps: () => mapProps,
+  queue: () => queue,
+  replicate: () => replicate,
+  throttling: () => throttling,
+  uid: () => uid
+});
+module.exports = __toCommonJS(lesta_exports);
 
 // packages/utils/replicate.js
 function replicate(data) {
   if (!data)
-    return data ?? null;
+    return data != null ? data : null;
   return typeof data === "object" ? JSON.parse(JSON.stringify(data)) : data;
 }
 
@@ -186,11 +216,11 @@ function deliver(target, path, value) {
 // packages/utils/load.js
 async function load(src) {
   if (typeof src === "function") {
-    const module = src();
-    if (!(module instanceof Promise))
+    const module2 = src();
+    if (!(module2 instanceof Promise))
       return;
-    const res = await module;
-    return res?.default;
+    const res = await module2;
+    return res == null ? void 0 : res.default;
   }
   return src;
 }
@@ -440,15 +470,16 @@ var InitBasic = class {
         }
       },
       set: (target, path, value, ref) => {
+        var _a, _b;
         for (const keyNode in this.context.node) {
           const nodeElement = this.context.node[keyNode];
           nodeElement.reactivity.node && active(nodeElement.reactivity.node, ref);
           nodeElement.reactivity.component && active(nodeElement.reactivity.component, ref, value, path);
           for (const section in nodeElement.section) {
-            nodeElement.section[section]?.reactivity.component && active(nodeElement.section[section].reactivity.component, ref, value, path);
+            ((_a = nodeElement.section[section]) == null ? void 0 : _a.reactivity.component) && active(nodeElement.section[section].reactivity.component, ref, value, path);
           }
         }
-        this.component.handlers && this.component.handlers[ref]?.bind(this.context)(value);
+        this.component.handlers && ((_b = this.component.handlers[ref]) == null ? void 0 : _b.bind(this.context)(value));
       },
       get: (target, ref) => {
         if (this.impress.collect && !this.impress.refs.includes(ref)) {
@@ -519,7 +550,8 @@ var Init = class extends InitBasic {
     this.component.unmount && await this.component.unmount.bind(this.context)();
   }
   async props(props, container2) {
-    if (props.proxies && Object.keys(props.proxies).length && !this.component.props?.proxies)
+    var _a, _b, _c;
+    if (props.proxies && Object.keys(props.proxies).length && !((_a = this.component.props) == null ? void 0 : _a.proxies))
       return this.app.errorComponent(container2.nodepath, 211);
     if (!container2.proxy)
       container2.proxy = {};
@@ -534,9 +566,10 @@ var Init = class extends InitBasic {
           if (typeof prop !== "object")
             return this.app.errorProps(container2.nodepath, "proxies", key, 302);
           const validation = (v2) => {
+            var _a2;
             if (prop.required && (v2 === null || v2 === void 0))
               this.app.errorProps(container2.nodepath, "proxies", key, 303);
-            const value = v2 ?? prop.default ?? null;
+            const value = (_a2 = v2 != null ? v2 : prop.default) != null ? _a2 : null;
             if (prop.type && typeof value !== prop.type)
               this.app.errorProps(container2.nodepath, "proxies", key, 304, prop.type);
             return value;
@@ -587,14 +620,14 @@ var Init = class extends InitBasic {
         if (typeof prop !== "object")
           return this.app.errorProps(container2.path, "params", key, 302);
         const { store } = prop;
-        const data = props?.params[key];
+        const data = props == null ? void 0 : props.params[key];
         if (store) {
           await this.app.checkStore(store);
           const storeParams = this.app.store[store].params(key);
-          this.context.param[key] = replicate(storeParams) ?? (prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default);
+          this.context.param[key] = (_b = replicate(storeParams)) != null ? _b : prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default;
         } else {
           const isDataValid = data instanceof Promise || data instanceof HTMLCollection || data instanceof NodeList || data instanceof Element || key.startsWith("__");
-          this.context.param[key] = isDataValid ? data : replicate(data) ?? (prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default);
+          this.context.param[key] = isDataValid ? data : (_c = replicate(data)) != null ? _c : prop.required && this.app.errorProps(container2.path, "params", key, 303) || prop.default;
         }
         if (prop.type && typeof this.context.param[key] !== prop.type)
           this.app.errorProps(container2.path, "params", key, 304, prop.type);
@@ -809,9 +842,9 @@ var Components = class extends Node {
     const component = new Component(options, this.app, this.keyNode, nodeElement);
     const result = await component.create(options.src, proxies, value, index);
     if (options.sections) {
-      await this.section(specialty, result?.container, (proxies2, target, section) => {
+      await this.section(specialty, result == null ? void 0 : result.container, (proxies2, target, section) => {
         if (index !== void 0) {
-          return specialty(proxies2, result?.container.section[section], index);
+          return specialty(proxies2, result == null ? void 0 : result.container.section[section], index);
         } else {
           return specialty(proxies2, target);
         }
@@ -874,12 +907,13 @@ var Iterate = class extends Components {
     return this.createIterate;
   }
   sections(sections, target, index) {
+    var _a;
     if (sections) {
       for (const [section, options] of Object.entries(sections)) {
         for (const [p, f] of Object.entries(options.proxies)) {
           if (typeof f === "function" && f.name) {
             if (f.length) {
-              target.section[section]?.proxy[p](f(this.data[index], index));
+              (_a = target.section[section]) == null ? void 0 : _a.proxy[p](f(this.data[index], index));
               this.sections(options.sections, target.section[section], index);
             }
           }
@@ -892,14 +926,15 @@ var Iterate = class extends Components {
       if (this.impress.refs.some((ref) => ref.includes(this.name))) {
         this.reactiveComponent(this.impress.define(pr), async (v, p) => {
           this.queue.add(async () => {
+            var _a, _b;
             if (p) {
               p.shift();
-              this.nodeElement.children[index]?.proxy[pr](v, p);
+              (_a = this.nodeElement.children[index]) == null ? void 0 : _a.proxy[pr](v, p);
             } else {
               this.data = this.node.component.iterate();
               if (index < this.data.length) {
                 const val = fn(this.data[index], index);
-                this.nodeElement.children[index]?.proxy[pr](val);
+                (_b = this.nodeElement.children[index]) == null ? void 0 : _b.proxy[pr](val);
               }
             }
           });
@@ -1174,8 +1209,8 @@ var Store = class {
 };
 
 // packages/create/app/index.js
-function createStore(module, app, key) {
-  const store = new Store(module, app, key);
+function createStore(module2, app, key) {
+  const store = new Store(module2, app, key);
   app.store[key] = store;
   store.created();
 }
@@ -1241,10 +1276,10 @@ function createApp(entry) {
     store: {},
     async checkStore(key) {
       if (!(key in app.store)) {
-        const module = await load(entry.stores[key]);
-        if (!module)
+        const module2 = await load(entry.stores[key]);
+        if (!module2)
           return errorStore(key, 401);
-        createStore(module, app, key);
+        createStore(module2, app, key);
       }
     },
     async mount(options, props = {}, nodeElement) {
@@ -1264,9 +1299,9 @@ function createApp(entry) {
       app.router && app.router.destroy();
     }
   };
-  for (const [key, module] of Object.entries(app.stores)) {
-    if (typeof module !== "function")
-      createStore(module, app, key);
+  for (const [key, module2] of Object.entries(app.stores)) {
+    if (typeof module2 !== "function")
+      createStore(module2, app, key);
   }
   app.router && app.router.init(app.root, app.mount, app.store);
   return { mount: app.mount, unmount: app.unmount };
@@ -1569,6 +1604,7 @@ var Router = class {
     }
   }
   async update() {
+    var _a, _b, _c, _d;
     if (await this.hooks(this.beforeEach, this.to, this.from))
       return;
     const route = new Route();
@@ -1581,8 +1617,8 @@ var Router = class {
         return;
       if (await this.hooks(target.beforeEnter, to, from))
         return;
-      for await (const module of Object.values(this.stores)) {
-        if (await this.hooks(module.store.beforeEnter?.bind(module.context), to, from))
+      for await (const module2 of Object.values(this.stores)) {
+        if (await this.hooks((_a = module2.store.beforeEnter) == null ? void 0 : _a.bind(module2.context), to, from))
           return;
       }
       if (target.redirect) {
@@ -1590,7 +1626,7 @@ var Router = class {
         typeof v === "function" ? this.push(await v(to, from)) : this.push(v);
         return;
       }
-      if (from?.path === to.path) {
+      if ((from == null ? void 0 : from.path) === to.path) {
         await this.routeUpdate(this.current);
       } else if (target.static && this.current) {
         window.location.href = to.fullPath;
@@ -1600,7 +1636,7 @@ var Router = class {
         if (!component.layout) {
           this.currentLayout = null;
           this.root.unmount && await this.root.unmount();
-        } else if (this.currentLayout?.options === component.layout) {
+        } else if (((_b = this.currentLayout) == null ? void 0 : _b.options) === component.layout) {
           await this.routeUpdate(this.currentLayout);
           this.currentLayout.options.routerView.unmount && await this.currentLayout.options.routerView.unmount();
         } else {
@@ -1611,15 +1647,15 @@ var Router = class {
         }
         document.title = target.title || "Lesta";
         this.setName(target.name, target.layout);
-        this.current = await this.mount(component, { to, from }, this.currentLayout?.options.routerView || this.root);
+        this.current = await this.mount(component, { to, from }, ((_c = this.currentLayout) == null ? void 0 : _c.options.routerView) || this.root);
         await this.routeUpdate(this.current);
       }
       if (await this.hooks(this.afterEnter, to, from))
         return;
       if (await this.hooks(target.afterEnter, to, from))
         return;
-      for await (const module of Object.values(this.stores)) {
-        if (await this.hooks(module.store.afterEnter?.bind(module.context), to, from))
+      for await (const module2 of Object.values(this.stores)) {
+        if (await this.hooks((_d = module2.store.afterEnter) == null ? void 0 : _d.bind(module2.context), to, from))
           return;
       }
     }
@@ -1638,7 +1674,8 @@ function createRouter(options) {
     go
   };
 }
-export {
+// Annotate the CommonJS export names for ESM import in node:
+0 && (module.exports = {
   createApp,
   createRouter,
   createWidget,
@@ -1651,4 +1688,4 @@ export {
   replicate,
   throttling,
   uid
-};
+});
