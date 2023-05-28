@@ -19,9 +19,9 @@ function createComponent(options, nodeElement, component, section) {
     sectionNode.nodepath = nodeElement.nodepath + '.' + section
     sectionNode.nodename = section
     if (!sectionNode.unmount) sectionNode.unmount = async () => {
+      sectionNode.innerHTML = ''
       component.destroy(sectionNode)
       await component.unmount()
-      sectionNode.innerHTML = ''
     }
     return sectionNode
   } else {
@@ -29,8 +29,8 @@ function createComponent(options, nodeElement, component, section) {
       if (!nodeElement.iterableElement) {
         if (!options.template) return this.app.errorComponent(nodeElement.nodepath, 209)
         const template = stringToHTML(options.template)
-        if (template.length > 1) return this.app.errorComponent(nodeElement.nodepath, 210)
-        nodeElement.iterableElement = template[0]
+        if (template.children.length > 1) return this.app.errorComponent(nodeElement.nodepath, 210)
+        nodeElement.iterableElement = template.children[0]
         nodeElement.innerHTML = ''
       }
       const iterableElement = nodeElement.iterableElement.cloneNode(true)
@@ -44,18 +44,18 @@ function createComponent(options, nodeElement, component, section) {
       }
       iterableElement.setAttribute('iterable', '')
       iterableElement.unmount = async () => {
+        nodeElement.children[nodeElement.children.length - 1].remove()
         await component.destroy(iterableElement)
         await component.unmount()
-        nodeElement.children[nodeElement.children.length - 1].remove()
       }
       return iterableElement
     } else if (options.template) {
       nodeElement.innerHTML = options.template
     }
     if (!nodeElement.unmount) nodeElement.unmount = async () => {
+      nodeElement.innerHTML = ''
       component.destroy(nodeElement)
       await component.unmount()
-      nodeElement.innerHTML = ''
     }
     return nodeElement
   }
@@ -74,7 +74,7 @@ function createApp(entry) {
       }
     },
     async mount(options, props = {}, nodeElement) {
-      if (app.router) {
+      if (app.router && props.to) {
         app.router.to = props.to
         app.router.from = props.from
       }

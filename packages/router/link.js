@@ -50,13 +50,13 @@ export default function link(v, t, l) {
             res = res.replace('/:' + key, encode(r))
           } else warnRouter(553, key)
         }
-      }
+      } else res = url.pathname
       if (v.search) {
         for (const key in v.search) {
           v.search[key] === '' ? url.searchParams.delete(key) : url.searchParams.set(encode(key), encode(v.search[key]))
         }
+        res += url.search
       }
-      res += url.search
     }
   } else res = v
   res = res.replace(/\/$/, '').replace(/^([^/])/, '/$1')

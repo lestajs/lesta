@@ -15,22 +15,23 @@ export default class Route {
       slugs && slugs.forEach((slug, index) => {
         params[slug.substring(1)] = this.result.map[index + 1]
       })
-      return {
+      const to = {
         path: this.result.map.at(0) || '/',
         params,
         fullPath: window.location.href,
         hash: window.location.hash.slice(1),
         search: Object.fromEntries(new URLSearchParams(window.location.search)),
-        extra: target.extra,
         name: target.name,
-        rout: {
-          name: target.name,
-          path: this.result.path,
-          params: target.params,
-          alias: target.alias,
-          redirect: target.redirect
-        }
+        extras: target.extras,
+        rout: { path: this.result.path }
       }
+      if (target.extra) to.rout.extra = target.extra
+      if (target.name) to.rout.name = target.name
+      if (target.params) to.rout.params = target.params
+      if (target.alias) to.rout.alias = target.alias
+      if (target.redirect) to.rout.redirect = target.redirect
+      if (target.static) to.rout.static = target.static
+      return to
     }
   }
   mapping(path) {

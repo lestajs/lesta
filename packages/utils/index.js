@@ -12,6 +12,7 @@ import { cleanHTML } from './cleanHTML'
 import { stringToHTML } from './stringToHTML'
 import { uid } from './uid'
 import { queue } from './queue'
+import { deepFreeze } from './deepFreeze'
 
 export {
   replicate,
@@ -27,5 +28,6 @@ export {
   cleanHTML,
   stringToHTML,
   uid,
-  queue
+  queue,
+  deepFreeze
 }
