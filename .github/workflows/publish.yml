@@ -21,7 +21,8 @@ jobs:
       - run: |
           git config --global user.email akosyak@protonmail.com
           git config --global user.name kossyak
-          git checkout -- package-lock.json
+          git add .
+          git commit -am build
           npm version ${{ github.event.inputs.version }}
           git push origin main
           git push origin v${{ github.event.inputs.version }}
