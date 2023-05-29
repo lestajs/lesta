@@ -22,9 +22,9 @@ jobs:
           git status
           git config --global user.email akosyak@protonmail.com
           git config --global user.name kossyak
-          git add .
-          git commit -am build
           npm version ${{ github.event.inputs.version }}
+          git add -A
+          git commit -am "build"
           git push origin main
           git push origin v${{ github.event.inputs.version }}
       - run: npm publish
