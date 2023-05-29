@@ -19,6 +19,7 @@ jobs:
       - run: npm run test
       - run: npm run build
       - run: |
+          git status
           git config --global user.email akosyak@protonmail.com
           git config --global user.name kossyak
           git add .
