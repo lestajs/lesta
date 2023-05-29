@@ -49,7 +49,7 @@ function buildCreateWidget(name) {
     outfile: `bundlers/${name}.createWidget.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: true }
+    define: { CDN: 'true' }
   })
   // minified version
   build({
@@ -57,7 +57,7 @@ function buildCreateWidget(name) {
     outfile: `bundlers/${name}.createWidget.prod.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: true },
+    define: { CDN: 'true' },
     minify: true
   }).then(() => {
     outputSize(name)
