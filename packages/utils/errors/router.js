@@ -11,6 +11,6 @@ const messages = {
 }
 
 const errorRouter = (name = '', code, param = '') => console.error(`[Lesta error ${code}]: Error in route "${name}": ${messages[code]}`, param)
-const warnRouter = (code, param = '') => console.error(`[Lesta warn ${code}]: ${messages[code]}`, param)
+const warnRouter = (code, param = '') => console.warn(`[Lesta warn ${code}]: ${messages[code]}`, param)
 
 export { errorRouter, warnRouter }

@@ -21,22 +21,43 @@ function build(config) {
   }).catch(() => process.exit(1))
 }
 
-// cdn
-function buildCDN(name) {
+// global
+function buildGlobal(name) {
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.js`,
+    outfile: `bundlers/${name}.global.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: 'true'}
+    define: { CDN: true }
   })
   // minified version
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.min.js`,
+    outfile: `bundlers/${name}.global.prod.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: 'true'},
+    define: { CDN: true },
+    minify: true
+  }).then(() => {
+    outputSize(name)
+  })
+}
+// createWidget
+function buildCreateWidget(name) {
+  build({
+    entryPoints: [resolve(`scripts/lesta.createWidget.js`)],
+    outfile: `bundlers/${name}.createWidget.js`,
+    bundle: true,
+    platform: 'browser',
+    define: { CDN: true }
+  })
+  // minified version
+  build({
+    entryPoints: [resolve(`scripts/${name}.js`)],
+    outfile: `bundlers/${name}.createWidget.prod.js`,
+    bundle: true,
+    platform: 'browser',
+    define: { CDN: true },
     minify: true
   }).then(() => {
     outputSize(name)
@@ -62,7 +83,7 @@ function buildCjs(name) {
   })
 }
 
-buildCDN('lesta.createApp')
-buildCDN('lesta.createWidget')
+buildCreateWidget('lesta')
+buildGlobal('lesta')
 buildEsm('lesta')
 buildCjs('lesta')
