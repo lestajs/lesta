@@ -28,7 +28,7 @@ function buildGlobal(name) {
     outfile: `bundlers/${name}.global.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: true }
+    define: { CDN: 'true' }
   })
   // minified version
   build({
@@ -36,7 +36,7 @@ function buildGlobal(name) {
     outfile: `bundlers/${name}.global.prod.js`,
     bundle: true,
     platform: 'browser',
-    define: { CDN: true },
+    define: { CDN: 'true' },
     minify: true
   }).then(() => {
     outputSize(name)
