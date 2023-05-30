@@ -3,7 +3,7 @@ import { resolve } from 'path'
 import zlib from 'zlib'
 
 function outputSize(name) {
-  let size = bytesToSize(zlib.brotliCompressSync(resolve(`bundlers/${name}.min.js`)).length)
+  let size = bytesToSize(zlib.brotliCompressSync(resolve(`dist/${name}.prod.js`)).length)
   console.log("\x1b[32m", `${name}: ${size}`, "\x1b[0m")
 }
 
@@ -25,7 +25,7 @@ function build(config) {
 function buildGlobal(name) {
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.global.js`,
+    outfile: `dist/${name}.js`,
     bundle: true,
     platform: 'browser',
     define: { CDN: 'true' }
@@ -33,7 +33,7 @@ function buildGlobal(name) {
   // minified version
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.global.prod.js`,
+    outfile: `dist/${name}.prod.js`,
     bundle: true,
     platform: 'browser',
     define: { CDN: 'true' },
@@ -45,8 +45,8 @@ function buildGlobal(name) {
 // createWidget
 function buildCreateWidget(name) {
   build({
-    entryPoints: [resolve(`scripts/lesta.createWidget.js`)],
-    outfile: `bundlers/${name}.createWidget.js`,
+    entryPoints: [resolve(`scripts/${name}.js`)],
+    outfile: `dist/${name}.js`,
     bundle: true,
     platform: 'browser',
     define: { CDN: 'true' }
@@ -54,7 +54,7 @@ function buildCreateWidget(name) {
   // minified version
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.createWidget.prod.js`,
+    outfile: `dist/${name}.prod.js`,
     bundle: true,
     platform: 'browser',
     define: { CDN: 'true' },
@@ -67,7 +67,7 @@ function buildCreateWidget(name) {
 function buildEsm(name) {
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.esm.js`,
+    outfile: `dist/${name}.esm.js`,
     bundle: true,
     platform: 'neutral',
     mainFields: ['module', 'main'],
@@ -76,14 +76,14 @@ function buildEsm(name) {
 function buildCjs(name) {
   build({
     entryPoints: [resolve(`scripts/${name}.js`)],
-    outfile: `bundlers/${name}.cjs.js`,
+    outfile: `dist/${name}.cjs.js`,
     bundle: true,
     target: ['node10.4'],
     platform: 'node'
   })
 }
 
-buildCreateWidget('lesta')
-buildGlobal('lesta')
+buildCreateWidget('lesta.createWidget')
+buildGlobal('lesta.global')
 buildEsm('lesta')
 buildCjs('lesta')

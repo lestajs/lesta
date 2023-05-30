@@ -8,9 +8,14 @@
     "lestajs"
   ],
   "files": [
-    "bundlers/lesta.esm.js",
-    "bundlers/lesta.cjs.js"
+    "dist/lesta.esm.js",
+    "dist/lesta.cjs.js",
+    "dist/lesta.global.js",
+    "dist/lesta.global.prod.js",
+    "dist/lesta.createWidget.js",
+    "dist/lesta.createWidget.prod.js"
   ],
+  "jsdelivr": "dist/lesta.global.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/lestajs/lesta.git"
@@ -18,12 +23,12 @@
   "bugs": {
     "url": "https://github.com/lestajs/lesta/issues"
   },
-  "main": "bundlers/lesta.esm.js",
-  "module": "bundlers/lesta.esm.js",
+  "main": "dist/lesta.esm.js",
+  "module": "dist/lesta.esm.js",
   "exports": {
     ".": {
-      "import": "./bundlers/lesta.esm.js",
-      "require": "./bundlers/lesta.cjs.js"
+      "import": "./dist/lesta.esm.js",
+      "require": "./dist/lesta.cjs.js"
     }
   },
   "scripts": {
@@ -31,8 +36,8 @@
     "test": "cypress run",
     "cypress": "cypress open"
   },
-  "author": "Sasha kossyak",
-  "license": "ISC",
+  "author": "Sasha Kosyak",
+  "license": "MIT",
   "devDependencies": {
     "cypress": "^7.0.0",
     "esbuild": "~0.16.17",
