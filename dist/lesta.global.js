@@ -1,10 +1,26 @@
-"use strict";
 (() => {
   var __defProp = Object.defineProperty;
   var __export = (target, all) => {
     for (var name in all)
       __defProp(target, name, { get: all[name], enumerable: true });
   };
+
+  // scripts/lesta.js
+  var lesta_exports = {};
+  __export(lesta_exports, {
+    createApp: () => createApp,
+    createRouter: () => createRouter,
+    createWidget: () => createWidget,
+    debounce: () => debounce,
+    deepFreeze: () => deepFreeze,
+    delay: () => delay,
+    deleteReactive: () => deleteReactive,
+    mapProps: () => mapProps,
+    queue: () => queue,
+    replicate: () => replicate,
+    throttling: () => throttling,
+    uid: () => uid
+  });
 
   // packages/utils/replicate.js
   function replicate(data) {
@@ -1640,4 +1656,7 @@
       go
     };
   }
+
+  // scripts/lesta.global.js
+  window.lesta = lesta_exports;
 })();

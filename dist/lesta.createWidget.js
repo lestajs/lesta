@@ -1,4 +1,3 @@
-"use strict";
 (() => {
   // packages/utils/replicate.js
   function replicate(data) {
