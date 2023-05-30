@@ -1282,9 +1282,11 @@
         app.router && app.router.destroy();
       }
     };
-    for (const [key, module] of Object.entries(app.stores)) {
-      if (typeof module !== "function")
-        createStore(module, app, key);
+    if (app.stores) {
+      for (const [key, module] of Object.entries(app.stores)) {
+        if (typeof module !== "function")
+          createStore(module, app, key);
+      }
     }
     app.router && app.router.init(app.root, app.mount, app.store);
     return { mount: app.mount, unmount: app.unmount };

@@ -1300,9 +1300,11 @@ function createApp(entry) {
       app.router && app.router.destroy();
     }
   };
-  for (const [key, module2] of Object.entries(app.stores)) {
-    if (typeof module2 !== "function")
-      createStore(module2, app, key);
+  if (app.stores) {
+    for (const [key, module2] of Object.entries(app.stores)) {
+      if (typeof module2 !== "function")
+        createStore(module2, app, key);
+    }
   }
   app.router && app.router.init(app.root, app.mount, app.store);
   return { mount: app.mount, unmount: app.unmount };
